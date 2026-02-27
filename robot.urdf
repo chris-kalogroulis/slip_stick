@@ -1,0 +1,174 @@
+<?xml version="1.0"?>
+<robot name="box_leg_with_foot" xmlns:drake="http://drake.mit.edu">
+
+  <link name="world"/>
+
+  <!-- Massless intermediate links to implement planar-with-limits: x-slide, z-slide, yaw -->
+  <link name="x_stage"/>
+  <link name="z_stage"/>
+
+  <joint name="world_to_x_prismatic" type="prismatic">
+    <parent link="world"/>
+    <child link="x_stage"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0" upper="1.5" effort="1e6" velocity="5.0"/>
+  </joint>
+
+  <joint name="x_to_z_prismatic" type="prismatic">
+    <parent link="x_stage"/>
+    <child link="z_stage"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-1.0" upper="0.0" effort="1e6" velocity="5.0"/>
+  </joint>
+
+  <joint name="z_to_leg_yaw" type="continuous">
+    <parent link="z_stage"/>
+    <child link="leg"/>
+    <!-- Place the leg so that its ankle (leg frame z = -0.5) is at the world origin when q=0 -->
+    <origin xyz="0 0 0.5" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <link name="leg">
+    <inertial>
+      <!-- Composite COM of: leg box (0.5 kg at z=0) + top sphere (5 kg at z=+0.5) -->
+      <origin xyz="0 0 0.4545454545" rpy="0 0 0"/>
+      <mass value="5.5"/>
+      <inertia
+        ixx="0.17531969697" ixy="0" ixz="0"
+        iyy="0.17531969697" iyz="0"
+        izz="0.02003333333"/>
+    </inertial>
+
+    <!-- Visual: leg box (red) -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.02 0.02 1.0"/>
+      </geometry>
+      <material name="leg_red">
+        <color rgba="0.80 0.10 0.10 1.0"/>
+      </material>
+    </visual>
+
+    <!-- Visual: bottom cylinder (red), axis along y, centered at z=-0.5 -->
+    <visual>
+      <origin xyz="0 0 -0.5" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.01" length="0.02"/>
+      </geometry>
+      <material name="leg_red">
+        <color rgba="0.80 0.10 0.10 1.0"/>
+      </material>
+    </visual>
+
+    <!-- Visual: top sphere (red), radius 0.1 at z=+0.5 -->
+    <visual>
+      <origin xyz="0 0 0.5" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.1"/>
+      </geometry>
+      <material name="leg_red">
+        <color rgba="0.80 0.10 0.10 1.0"/>
+      </material>
+    </visual>
+
+    <!-- No collisions on the leg (per your request) -->
+  </link>
+
+  <link name="foot">
+    <inertial>
+      <origin xyz="0 0 -0.02" rpy="0 0 0"/>
+      <mass value="0.075"/>
+      <inertia
+        ixx="0.000015908522727272727" ixy="0" ixz="0"
+        iyy="0.00005732897727272727"  iyz="0"
+        izz="0.00007267045454545454"/>
+    </inertial>
+
+    <!-- Toe (blue), hard hydroelastic -->
+    <visual>
+      <origin xyz="0.045 0 -0.02" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.01 0.05 0.005"/>
+      </geometry>
+      <material name="toe_heel_blue">
+        <color rgba="0.10 0.30 0.90 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.045 0 -0.02" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.01 0.05 0.005"/>
+      </geometry>
+      <drake:proximity_properties>
+        <drake:rigid_hydroelastic/>
+        <drake:mesh_resolution_hint value="0.005"/>
+        <drake:mu_static value="0.9"/>
+        <drake:mu_dynamic value="0.8"/>
+        <drake:hunt_crossley_dissipation value="1.0"/>
+      </drake:proximity_properties>
+    </collision>
+
+    <!-- Heel (blue), hard hydroelastic -->
+    <visual>
+      <origin xyz="-0.045 0 -0.02" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.01 0.05 0.005"/>
+      </geometry>
+      <material name="toe_heel_blue">
+        <color rgba="0.10 0.30 0.90 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.045 0 -0.02" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.01 0.05 0.005"/>
+      </geometry>
+      <drake:proximity_properties>
+        <drake:rigid_hydroelastic/>
+        <drake:mesh_resolution_hint value="0.005"/>
+        <drake:mu_static value="0.9"/>
+        <drake:mu_dynamic value="0.8"/>
+        <drake:hunt_crossley_dissipation value="1.0"/>
+      </drake:proximity_properties>
+    </collision>
+
+    <!-- Sole (green), soft hydroelastic -->
+    <visual>
+      <origin xyz="0 0 -0.02" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.08 0.05 0.007"/>
+      </geometry>
+      <material name="sole_green">
+        <color rgba="0.10 0.80 0.20 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.02" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.08 0.05 0.007"/>
+      </geometry>
+      <drake:proximity_properties>
+        <drake:compliant_hydroelastic/>
+        <drake:hydroelastic_modulus value="5000000.0"/>
+        <drake:mesh_resolution_hint value="0.005"/>
+        <drake:mu_static value="0.9"/>
+        <drake:mu_dynamic value="0.8"/>
+        <drake:hunt_crossley_dissipation value="1.0"/>
+      </drake:proximity_properties>
+    </collision>
+  </link>
+
+  <!-- Revolute ankle joint about y at the leg bottom (z=-0.5 in leg frame) -->
+  <joint name="ankle_y" type="revolute">
+    <parent link="leg"/>
+    <child link="foot"/>
+    <origin xyz="0 0 -0.5" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.0471975512" upper="1.0471975512" effort="50" velocity="10"/>
+  </joint>
+
+</robot>
