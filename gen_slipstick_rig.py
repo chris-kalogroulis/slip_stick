@@ -5,7 +5,7 @@ import math
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence, Tuple, Union
+from typing import Dict, Sequence, Tuple, Union
 
 
 def _prettify(elem: ET.Element, level: int = 0) -> None:
@@ -145,18 +145,19 @@ def _add_collision_box_with_hydro(
 
 
 def write_slip_stick_urdf(
-    output_path: Union[str, Path],
-    foot_offset: Sequence[float],           # p_COM->ankle
-    foot_size: Sequence[float],             # [x_total, y, z_toeheel]
-    toe_size: float,                        # x-length of toe & heel blocks
-    sole_protrusion: float,                 # sole_z = foot_size[2] + 2*sole_protrusion
-    leg_length: float,
-    leg_limits: Sequence[Sequence[float]],  # [[xmin,zmin],[xmax,zmax]] magnitudes; z will be flipped
-    ankle_limit: Sequence[float],           # degrees [a,b]
-    mass: float,                            # spherical link "mass" mass in kg
-    hydro_hard: HydroRigidConfig,
-    hydro_soft: HydroSoftConfig
+    rig_params: Dict
 ) -> Path:
+    output_path = rig_params.get("output_path", "slip_stick_rig.urdf")
+    foot_offset     = rig_params.get("foot_offset")
+    foot_size       = rig_params.get("foot_size")
+    toe_size        = rig_params.get("toe_size")
+    sole_protrusion = rig_params.get("sole_protrusion")
+    leg_length      = rig_params.get("leg_length")
+    leg_limits      = rig_params.get("leg_limits")
+    ankle_limit     = rig_params.get("ankle_limit")
+    mass            = rig_params.get("mass")
+    hydro_hard     = rig_params.get("hard")
+    hydro_soft     = rig_params.get("soft")
     out = Path(output_path)
 
     if len(foot_offset) != 3 or len(foot_size) != 3:
@@ -245,14 +246,14 @@ def write_slip_stick_urdf(
     ET.SubElement(robot, "link", name="x_stage")
     ET.SubElement(robot, "link", name="z_stage")
 
-    jx = ET.SubElement(robot, "joint", name="world_to_x_prismatic", type="prismatic")
+    jx = ET.SubElement(robot, "joint", name="x_prismatic", type="prismatic")
     ET.SubElement(jx, "parent", link="world")
     ET.SubElement(jx, "child", link="x_stage")
     ET.SubElement(jx, "origin", xyz="0 0 0", rpy="0 0 0")
     ET.SubElement(jx, "axis", xyz="1 0 0")
     ET.SubElement(jx, "limit", lower=f"{xmin}", upper=f"{xmax}", effort="1e6", velocity="5.0")
 
-    jz = ET.SubElement(robot, "joint", name="x_to_z_prismatic", type="prismatic")
+    jz = ET.SubElement(robot, "joint", name="z_prismatic", type="prismatic")
     ET.SubElement(jz, "parent", link="x_stage")
     ET.SubElement(jz, "child", link="z_stage")
     ET.SubElement(jz, "origin", xyz="0 0 0", rpy="0 0 0")
@@ -353,3 +354,36 @@ def write_slip_stick_urdf(
     _prettify(robot)
     ET.ElementTree(robot).write(out, encoding="utf-8", xml_declaration=True)
     return out
+
+if __name__ == "__main__":
+
+    hard = HydroRigidConfig(
+        mesh_resolution_hint=0.005,
+        mu_static=0.3,
+        mu_dynamic=0.2,
+        dissipation=1.0,
+    )
+
+    soft = HydroSoftConfig(
+        hydroelastic_modulus=5e6,
+        mesh_resolution_hint=0.005,
+        mu_static=0.9,
+        mu_dynamic=0.8,
+        dissipation=1.0,
+    )
+
+    rig_params = {
+        "output_path": "slipstick_rig.urdf",
+        "foot_offset": [0.0, 0.0, 0.02],
+        "foot_size": [0.52, 0.05, 0.005],
+        "toe_size": 0.02,
+        "sole_protrusion": 0.001,
+        "leg_length": 0.60,
+        "leg_limits": [[0.0, 0.0], [1.5, 0.80]],
+        "ankle_limit": [-60.0, 60.0],
+        "mass": 5.0,
+        "soft": soft,
+        "hard": hard
+    }
+
+    write_slip_stick_urdf(rig_params)

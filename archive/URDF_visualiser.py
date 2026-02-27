@@ -14,7 +14,9 @@ def main():
     print(meshcat.web_url())
 
     # Path to the URDF (in the same directory as this script)
-    urdf_path = Path("slip_stick_rig.urdf")
+
+    parent_dir = Path(__file__).parent.parent  # Go up one level to the project root
+    urdf_path = parent_dir / "slipstick_rig.urdf"
 
     if not urdf_path.exists():
         raise FileNotFoundError(f"URDF not found: {urdf_path.resolve()}")

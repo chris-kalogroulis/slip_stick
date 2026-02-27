@@ -15,35 +15,35 @@
   <link name="world" />
   <link name="x_stage" />
   <link name="z_stage" />
-  <joint name="world_to_x_prismatic" type="prismatic">
+  <joint name="x_prismatic" type="prismatic">
     <parent link="world" />
     <child link="x_stage" />
     <origin xyz="0 0 0" rpy="0 0 0" />
     <axis xyz="1 0 0" />
-    <limit lower="0.0" upper="1.5" effort="1e6" velocity="5.0" />
+    <limit lower="0.0" upper="1.2" effort="1e6" velocity="5.0" />
   </joint>
-  <joint name="x_to_z_prismatic" type="prismatic">
+  <joint name="z_prismatic" type="prismatic">
     <parent link="x_stage" />
     <child link="z_stage" />
     <origin xyz="0 0 0" rpy="0 0 0" />
     <axis xyz="0 0 1" />
-    <limit lower="-0.7" upper="-0.0" effort="1e6" velocity="5.0" />
+    <limit lower="-1.2" upper="-0.0" effort="1e6" velocity="5.0" />
   </joint>
   <link name="leg">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <mass value="0.15" />
-      <inertia ixx="0.00113" ixy="0" ixz="0" iyy="0.00113" iyz="0" izz="9.999999999999999e-06" />
+      <mass value="0.25" />
+      <inertia ixx="0.005216666666666666" ixy="0" ixz="0" iyy="0.005216666666666666" iyz="0" izz="1.6666666666666667e-05" />
     </inertial>
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
       <geometry>
-        <box size="0.02 0.02 0.3" />
+        <box size="0.02 0.02 0.5" />
       </geometry>
       <material name="leg_red" />
     </visual>
     <visual>
-      <origin xyz="0.0 0.0 -0.15" rpy="1.5707963267948966 0.0 0.0" />
+      <origin xyz="0.0 0.0 -0.25" rpy="1.5707963267948966 0.0 0.0" />
       <geometry>
         <cylinder radius="0.01" length="0.02" />
       </geometry>
@@ -53,18 +53,18 @@
   <joint name="z_to_leg_fixed" type="fixed">
     <parent link="z_stage" />
     <child link="leg" />
-    <origin xyz="0 0 0.15" rpy="0 0 0" />
+    <origin xyz="0 0 0.25" rpy="0 0 0" />
   </joint>
   <link name="mass">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <mass value="2.0" />
-      <inertia ixx="0.0006272" ixy="0" ixz="0" iyy="0.0006272" iyz="0" izz="0.0006272" />
+      <mass value="5.0" />
+      <inertia ixx="0.00605" ixy="0" ixz="0" iyy="0.00605" iyz="0" izz="0.00605" />
     </inertial>
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
       <geometry>
-        <sphere radius="0.027999999999999997" />
+        <sphere radius="0.055" />
       </geometry>
       <material name="mass_gray" />
     </visual>
@@ -72,72 +72,72 @@
   <joint name="leg_to_mass_weld" type="fixed">
     <parent link="leg" />
     <child link="mass" />
-    <origin xyz="0 0 0.15" rpy="0 0 0" />
+    <origin xyz="0 0 0.25" rpy="0 0 0" />
   </joint>
   <link name="foot">
     <inertial>
       <origin xyz="-0.0 -0.0 -0.02" rpy="0 0 0" />
       <mass value="0.075" />
-      <inertia ixx="1.588286290322581e-05" ixy="0" ixz="0" iyy="5.501592741935485e-05" iyz="0" izz="7.038306451612905e-05" />
+      <inertia ixx="1.5900322164948456e-05" ixy="0" ixz="0" iyy="0.00012615805412371134" iyz="0" izz="0.0001415077319587629" />
     </inertial>
     <visual>
-      <origin xyz="0.04 -0.0 -0.02" rpy="0.0 0.0 0.0" />
+      <origin xyz="0.065 -0.0 -0.02" rpy="0.0 0.0 0.0" />
       <geometry>
         <box size="0.02 0.05 0.005" />
       </geometry>
       <material name="toe_heel_blue" />
     </visual>
     <collision>
-      <origin xyz="0.04 -0.0 -0.02" rpy="0.0 0.0 0.0" />
+      <origin xyz="0.065 -0.0 -0.02" rpy="0.0 0.0 0.0" />
       <geometry>
         <box size="0.02 0.05 0.005" />
       </geometry>
       <drake:proximity_properties>
         <drake:rigid_hydroelastic />
         <drake:mesh_resolution_hint value="0.005" />
-        <drake:mu_static value="0.9" />
-        <drake:mu_dynamic value="0.8" />
+        <drake:mu_static value="0.3" />
+        <drake:mu_dynamic value="0.2" />
         <drake:hunt_crossley_dissipation value="1.0" />
       </drake:proximity_properties>
     </collision>
     <visual>
-      <origin xyz="-0.04 -0.0 -0.02" rpy="0.0 0.0 0.0" />
+      <origin xyz="-0.065 -0.0 -0.02" rpy="0.0 0.0 0.0" />
       <geometry>
         <box size="0.02 0.05 0.005" />
       </geometry>
       <material name="toe_heel_blue" />
     </visual>
     <collision>
-      <origin xyz="-0.04 -0.0 -0.02" rpy="0.0 0.0 0.0" />
+      <origin xyz="-0.065 -0.0 -0.02" rpy="0.0 0.0 0.0" />
       <geometry>
         <box size="0.02 0.05 0.005" />
       </geometry>
       <drake:proximity_properties>
         <drake:rigid_hydroelastic />
         <drake:mesh_resolution_hint value="0.005" />
-        <drake:mu_static value="0.9" />
-        <drake:mu_dynamic value="0.8" />
+        <drake:mu_static value="0.3" />
+        <drake:mu_dynamic value="0.2" />
         <drake:hunt_crossley_dissipation value="1.0" />
       </drake:proximity_properties>
     </collision>
     <visual>
       <origin xyz="-0.0 -0.0 -0.02" rpy="0.0 0.0 0.0" />
       <geometry>
-        <box size="0.060000000000000005 0.05 0.007" />
+        <box size="0.10999999999999999 0.05 0.007" />
       </geometry>
       <material name="sole_green" />
     </visual>
     <collision>
       <origin xyz="-0.0 -0.0 -0.02" rpy="0.0 0.0 0.0" />
       <geometry>
-        <box size="0.060000000000000005 0.05 0.007" />
+        <box size="0.10999999999999999 0.05 0.007" />
       </geometry>
       <drake:proximity_properties>
         <drake:compliant_hydroelastic />
         <drake:hydroelastic_modulus value="5000000.0" />
         <drake:mesh_resolution_hint value="0.005" />
-        <drake:mu_static value="0.9" />
-        <drake:mu_dynamic value="0.8" />
+        <drake:mu_static value="2.0" />
+        <drake:mu_dynamic value="1.5" />
         <drake:hunt_crossley_dissipation value="1.0" />
       </drake:proximity_properties>
     </collision>
@@ -145,7 +145,7 @@
   <joint name="ankle_y" type="revolute">
     <parent link="leg" />
     <child link="foot" />
-    <origin xyz="0 0 -0.15" rpy="0 0 0" />
+    <origin xyz="0 0 -0.25" rpy="0 0 0" />
     <axis xyz="0 1 0" />
     <limit lower="-1.0471975511965976" upper="1.0471975511965976" effort="50" velocity="10" />
   </joint>
