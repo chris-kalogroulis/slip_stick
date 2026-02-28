@@ -27,7 +27,7 @@
     <child link="z_stage" />
     <origin xyz="0 0 0" rpy="0 0 0" />
     <axis xyz="0 0 1" />
-    <limit lower="-1.2" upper="-0.0" effort="1e6" velocity="5.0" />
+    <limit lower="-1.2" upper="5" effort="1e6" velocity="5.0" />
   </joint>
   <link name="leg">
     <inertial>
@@ -78,7 +78,7 @@
     <inertial>
       <origin xyz="-0.0 -0.0 -0.02" rpy="0 0 0" />
       <mass value="0.075" />
-      <inertia ixx="1.5900322164948456e-05" ixy="0" ixz="0" iyy="0.00012615805412371134" iyz="0" izz="0.0001415077319587629" />
+      <inertia ixx="1.6296143617021278e-05" ixy="0" ixz="0" iyy="0.00011087061170212766" iyz="0" izz="0.0001258244680851064" />
     </inertial>
     <visual>
       <origin xyz="0.065 -0.0 -0.02" rpy="0.0 0.0 0.0" />
@@ -121,20 +121,41 @@
       </drake:proximity_properties>
     </collision>
     <visual>
+      <origin xyz="-0.07875 -0.0 -0.021" rpy="0.0 0.0 0.0" />
+      <geometry>
+        <box size="0.0075 0.05 0.007" />
+      </geometry>
+      <material name="sole_green" />
+    </visual>
+    <collision>
+      <origin xyz="-0.07875 -0.0 -0.021" rpy="0.0 0.0 0.0" />
+      <geometry>
+        <box size="0.0075 0.05 0.007" />
+      </geometry>
+      <drake:proximity_properties>
+        <drake:compliant_hydroelastic />
+        <drake:hydroelastic_modulus value="1000000.0" />
+        <drake:mesh_resolution_hint value="0.001" />
+        <drake:mu_static value="2.0" />
+        <drake:mu_dynamic value="1.5" />
+        <drake:hunt_crossley_dissipation value="1.0" />
+      </drake:proximity_properties>
+    </collision>
+    <visual>
       <origin xyz="-0.0 -0.0 -0.02" rpy="0.0 0.0 0.0" />
       <geometry>
-        <box size="0.10999999999999999 0.05 0.007" />
+        <box size="0.10999999999999999 0.05 0.011" />
       </geometry>
       <material name="sole_green" />
     </visual>
     <collision>
       <origin xyz="-0.0 -0.0 -0.02" rpy="0.0 0.0 0.0" />
       <geometry>
-        <box size="0.10999999999999999 0.05 0.007" />
+        <box size="0.10999999999999999 0.05 0.011" />
       </geometry>
       <drake:proximity_properties>
         <drake:compliant_hydroelastic />
-        <drake:hydroelastic_modulus value="5000000.0" />
+        <drake:hydroelastic_modulus value="10000.0" />
         <drake:mesh_resolution_hint value="0.005" />
         <drake:mu_static value="2.0" />
         <drake:mu_dynamic value="1.5" />

@@ -158,6 +158,8 @@ def write_slip_stick_urdf(
     mass            = rig_params.get("mass")
     hydro_hard     = rig_params.get("hard")
     hydro_soft     = rig_params.get("soft")
+    hydro_medium   = rig_params.get("medium")
+    hook_size       = rig_params.get("hook_size")
     out = Path(output_path)
 
     if len(foot_offset) != 3 or len(foot_size) != 3:
@@ -175,6 +177,9 @@ def write_slip_stick_urdf(
 
     foot_offset_x, foot_offset_y, foot_offset_z = foot_offset
     foot_x, foot_y, foot_z_toeheel = foot_size
+    hook_x, hook_z = hook_size
+    hook_y = foot_y  # hook has same y-width as foot
+    hook_boxsize = (hook_x, hook_y, hook_z)
 
     # Foot geometry in COM frame (COM frame origin is at the foot COM)
     x_toe_center = (foot_x / 2.0) - (toe_size / 2.0)
@@ -186,6 +191,10 @@ def write_slip_stick_urdf(
     toe_pos = (ankle_to_com[0] + x_toe_center, ankle_to_com[1], ankle_to_com[2])
     heel_pos = (ankle_to_com[0] - x_toe_center, ankle_to_com[1], ankle_to_com[2])
     sole_pos = (ankle_to_com[0], ankle_to_com[1], ankle_to_com[2])
+
+    hook_xpos = - x_toe_center - (toe_size + hook_x) / 2.0
+    hook_zpos = (foot_z_toeheel - hook_z) / 2.0
+    hook_pos = (ankle_to_com[0] + hook_xpos, ankle_to_com[1], ankle_to_com[2] + hook_zpos)
 
     # Leg mass/inertia derived from leg_length
     leg_mass = 0.5 * leg_length
@@ -336,6 +345,9 @@ def write_slip_stick_urdf(
     _add_visual_box(foot, toeheel_size, heel_pos, (0.0, 0.0, 0.0), "toe_heel_blue")
     _add_collision_box_with_hydro(foot, toeheel_size, heel_pos, (0.0, 0.0, 0.0), hydro_hard)
 
+    _add_visual_box(foot, hook_boxsize, hook_pos, (0.0, 0.0, 0.0), "sole_green")
+    _add_collision_box_with_hydro(foot, hook_boxsize, hook_pos, (0.0, 0.0, 0.0), hydro_medium)
+
     _add_visual_box(foot, sole_size, sole_pos, (0.0, 0.0, 0.0), "sole_green")
     _add_collision_box_with_hydro(foot, sole_size, sole_pos, (0.0, 0.0, 0.0), hydro_soft)
 
@@ -364,6 +376,14 @@ if __name__ == "__main__":
         dissipation=1.0,
     )
 
+    medium = HydroSoftConfig(
+        hydroelastic_modulus=1e5,
+        mesh_resolution_hint=0.005,
+        mu_static=2.0,
+        mu_dynamic=1.5,
+        dissipation=1.0,
+    )
+
     soft = HydroSoftConfig(
         hydroelastic_modulus=5e6,
         mesh_resolution_hint=0.005,
@@ -375,7 +395,7 @@ if __name__ == "__main__":
     rig_params = {
         "output_path": "slipstick_rig.urdf",
         "foot_offset": [0.0, 0.0, 0.02],
-        "foot_size": [0.52, 0.05, 0.005],
+        "foot_size": [0.12, 0.05, 0.005],
         "toe_size": 0.02,
         "sole_protrusion": 0.001,
         "leg_length": 0.60,
@@ -383,7 +403,9 @@ if __name__ == "__main__":
         "ankle_limit": [-60.0, 60.0],
         "mass": 5.0,
         "soft": soft,
-        "hard": hard
+        "hard": hard,
+        "medium": medium,
+        "hook_size": [0.002, 0.01]  # x-thickness, z-height, with the y-width = foot_size[1]
     }
 
     write_slip_stick_urdf(rig_params)

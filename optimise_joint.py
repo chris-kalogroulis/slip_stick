@@ -7,6 +7,8 @@ from slipstick_sim import sim_cost, update_terrain
 
 offer_vis = False
 
+cheeky_vis = False
+
 count = None
 start_time = None
 test_params = None
@@ -65,7 +67,7 @@ def run_cost(x):
         "q0": 0.0,    # rad
     }
 
-    pos, vel = sim_cost(joint_params=ankle_params, test_params=test_params)
+    pos, vel = sim_cost(joint_params=ankle_params, test_params=test_params, vis=cheeky_vis)
 
     f=pos[0]
 

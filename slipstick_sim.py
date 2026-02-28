@@ -33,7 +33,7 @@ def add_ankle_springs_and_dampers(plant: MultibodyPlant, joint_params: Dict):
         plant.AddForceElement(
             RevoluteSpring(
                 joint=j,
-                nominal_angle=joint_params["q0"],
+                nominal_angle=np.deg2rad(joint_params["q0"]),
                 stiffness=joint_params["k"],
             )
         )
@@ -162,7 +162,7 @@ def create_scene(
     d = 0.1
     x_offset = -foot_x_offset + (length * np.cos(slope_rad))/2 - h*np.sin(slope_rad) - d*np.cos(slope_rad)
     z_offset = -foot_z_offset - (length * np.sin(slope_rad))/2 - h*np.cos(slope_rad) + d*np.sin(slope_rad)
-    tolerance = 1e-3
+    tolerance = 0
     T = RigidTransform(RollPitchYaw(0, slope_rad, 0), [x_offset-tolerance, 0, z_offset-tolerance])
 
     plant.WeldFrames(
@@ -249,23 +249,26 @@ def run_simulate(
     plant_sub = diagram.GetSubsystemByName("plant")
     plant_context = plant_sub.GetMyMutableContextFromRoot(context)
 
+    simulator.Initialize()
+    simulator.set_target_realtime_rate(realtime_rate)
+
+    start_height = (z_v0**2)/(2*9.81) # set initial z pos to get desired v0 at contact
+    cont_time = np.sqrt(2*start_height/9.81) # time to fall from that height
+    print(f"initial z pos set to {start_height:.4f} m to achieve z_vel0 of {z_v0:.4f} m/s at contact")
+
     rail = plant_sub.GetJointByName("x_prismatic")
     rail.set_translation(plant_context, x_q0)
     rail.set_translation_rate(plant_context, x_v0)
 
     thigh = plant_sub.GetJointByName("z_prismatic")
-    thigh.set_translation(plant_context, z_q0)
-    thigh.set_translation_rate(plant_context, z_v0)
-
-    simulator.Initialize()
-    simulator.set_target_realtime_rate(realtime_rate)
+    thigh.set_translation(plant_context, start_height)
+    thigh.set_translation_rate(plant_context, 0.0)
 
     if visualize_meshcat and meshcat is not None:
         meshcat.StartRecording()
+        time.sleep(1.0)  # give Meshcat a moment to start recording before the sim starts
 
-    time.sleep(0.5)
-
-    simulator.AdvanceTo(duration)
+    simulator.AdvanceTo(duration + cont_time)
 
     # ---- end-of-sim readout: weight pose + speed ----
     end_mass_pos, end_mass_speed = get_body_position_and_speed_at_end(
@@ -293,18 +296,18 @@ def run_simulate(
 # Set Parameters
 # -----------------------------
 ankle_params = {
-    "k": 1.0,   # Nm/rad
+    "k": 15.0,   # Nm/rad
     "d": 0.5,     # Nms/rad
-    "q0": 0.0,    # rad
+    "q0": 0.0,    # deg
 }
 
 test_params = {
-    "duration": 1.0,
+    "duration": 1.50,
     "x_pos0": 0.0,
     "x_vel0": 0.0,
     "z_pos0": 0.0,
-    "z_vel0": -2.0,
-    "slope": 30,
+    "z_vel0": 5.0,
+    "slope": 40,
 }
 
 terrain_params = {
@@ -313,7 +316,7 @@ terrain_params = {
     "top_color": (0.3, 0.3, 0.3, 1.0),
     "n": 100,
     "top_box_x": 0.0025,
-    "top_box_z": 0.0025,
+    "top_box_z": 0.0035,
     "filename": "terr_geom.urdf",
     "random": True,
     "seed": 0,
@@ -327,8 +330,16 @@ hard = HydroRigidConfig(
     dissipation=1.0,
 )
 
+medium = HydroSoftConfig(
+    hydroelastic_modulus=1e6,
+    mesh_resolution_hint=0.001,
+    mu_static=2.0,
+    mu_dynamic=1.5,
+    dissipation=1.0,
+)
+
 soft = HydroSoftConfig(
-    hydroelastic_modulus=5e6,
+    hydroelastic_modulus=1.0e4,
     mesh_resolution_hint=0.005,
     mu_static=2.0,
     mu_dynamic=1.5,
@@ -340,13 +351,15 @@ rig_params = {
     "foot_offset": [0.0, 0.0, 0.02],
     "foot_size": [0.15, 0.05, 0.005],
     "toe_size": 0.02,
-    "sole_protrusion": 0.001,
+    "sole_protrusion": 0.003,
     "leg_length": 0.50,
-    "leg_limits": [[0.0, 0.0], [1.2, 1.2]],
+    "leg_limits": [[0.0, -5], [1.2, 1.2]],
     "ankle_limit": [-60.0, 60.0],
     "mass": 5.0,
     "soft": soft,
-    "hard": hard
+    "hard": hard,
+    "medium": medium,
+    "hook_size": [0.0075, 0.007]
 }
 
 def update_rigURDF(rig_params: Dict):
@@ -368,7 +381,7 @@ def sim_cost(
         update_urdf=False
     ):
     end_mass_pos, end_mass_speed, simulator, diagram = run_simulate(
-        sim_time_step=1e-4,
+        sim_time_step=5e-4,
         realtime_rate=0.0,          # 0.0 = run as fast as possible (no real-time pacing)
         test_params=test_params,
         joint_params=joint_params,
@@ -387,7 +400,7 @@ def sim_cost(
 # -----------------------------
 if __name__ == "__main__":
     end_mass_pos, end_mass_speed, simulator, diagram = run_simulate(
-        sim_time_step=1e-4,
+        sim_time_step=5e-4,
         realtime_rate=0.0,          # 0.0 = run as fast as possible (no real-time pacing)
         test_params=test_params,
         joint_params=ankle_params,
